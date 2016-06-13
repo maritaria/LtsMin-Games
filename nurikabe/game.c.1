@@ -4,6 +4,7 @@
 #define EMPTY 0
 #define FILLED 1
 #define CLEARED 2
+
 #define MARK_1 3
 #define MARK_2 4
 #define MARK_3 5
@@ -12,7 +13,7 @@
 
 #define WIDTH 5
 #define HEIGHT 5
-#define SIZE WIDTH * HEIGHT
+#define ITEM_COUNT WIDTH * HEIGHT
 
 // transition labels
 #define GROUP_FILL 0
@@ -30,7 +31,7 @@ int group_count() {
 }
 
 int state_length() {
-	return SIZE;
+	return ITEM_COUNT;
 }
 
 int label_count() {
@@ -51,6 +52,7 @@ void set_value(int *dst, int x, int y, int value) {
 	dst[(y * WIDTH) + x] = value;
 }
 
+
 pos_t next_empty(int * dst) {
 	for (int x = 0; x < WIDTH; x++) {
 		for (int y = 0; y < HEIGHT; y++) {
@@ -62,62 +64,67 @@ pos_t next_empty(int * dst) {
 	}
 }
 
-void explore(int *dst, int *expl, int x, int y) {
-		
-	int changes = 0;
-	int i = 1;
-	
-	do {
-	
-		pos_t p = next_empty(expl);
-		set_value(expl, p.x, p.y, i);
-	} while (changes > 0);
-	
-	do {
-		changes = 0;
-		i++;
-		for (int x = 0; x < WIDTH; x++) {
-			for (int y = 0; y < HEIGHT; y++) {
-				int value = get_value(expl, x, y);
-				if (value != 0) {
-					int value_l = get_value(expl, x - 1, y);
-					int value_r = get_value(expl, x + 1, y);
-					int value_u = get_value(expl, x, y - 1);
-					int value_d = get_value(expl, x, y + 1);
-				
-					if (value_l == 0) { set_value(expl, x - 1, y, value); }
-					if (value_r == 0) { set_value(expl, x + 1, y, value); }
-					if (value_u == 0) { set_value(expl, x, y - 1, value); }
-					if (value_d == 0) { set_value(expl, x, y + 1, value); }
+int is_dead_end_at(int *dst, int x, int y, int target) {
+	pos_t group[7] = {
+		{ x, y },
+		{ -1, -1 },
+		{ -1, -1 },
+		{ -1, -1 },
+		{ -1, -1 },
+		{ -1, -1 },
+		{ -1, -1 }
+	};
+	int group_count = 1;
+	for (int i = 0; i < 5; i++) {
+		pos_t origpos = group[i];
+		if (origpos.x == -1 && origpos.y == -1) {
+			break;
+		}
+		for (int x = -1; x < 2; x++) {
+			for (int y = -1; y < 2; y++) {
+				if (x != 0 && y != 0 && (x == 0 || y == 0)) {
+					pos_t p = group[i];
+					p.x += x; p.y += y;
+					int val = get_value(dst, p.x, p.y);
+					if (val == EMPTY || val == CLEARED) {
+						if (group_count < 5) {
+							group[group_count] = p;
+							group_count++;
+						}
+					}
 				}
 			}
 		}
-	} while (changes > 0);
-	
-	
-	
+	}
+	return group_count < target;
 }
 
-int is_valid(int *dst) {
-	
-	
-	int expl[SIZE] = { 0 };
-	while (true) {
-		explore(dst, expl, p.x, p.y);
-		i++;
+int is_dead_end(int *dst) {
+	for (int x = 0; x < WIDTH; x++) {
+		for (int y = 0; y < HEIGHT; y++) {
+			int value = get_value(dst, x, y);
+			switch(value) {
+				case MARK_1:
+				case MARK_2:
+				case MARK_3:
+				case MARK_4:
+				case MARK_5:
+					if (is_dead_end_at(dst, x, y, 1 + value - MARK_1))
+					{
+						return 1;
+					}
+					break;
+			}
+		}
 	}
-	
-	
-	
-	
-	
+	return 0;
 }
 
 int fill_next(int *dst, int action, int *same, transition_info_t *tinfo, TransitionCB callback, int *arg) {
 	pos_t empty = next_empty(dst);
 	set_value(dst, empty.x, empty.y, action);
 	set_value(same, empty.x, empty.y, 0);
-	if (!is_valid(dst))
+	if (!is_dead_end(dst))
 	{
 		callback(arg, tinfo, dst, same);
 		return 1;
