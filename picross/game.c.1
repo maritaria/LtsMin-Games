@@ -35,7 +35,6 @@ int label_count() {
 
 typedef struct {int x; int y;} pos_t;
 
-
 int get_value(int* dst, int x, int y) {
 	return dst[(y * WIDTH) + x];
 }
@@ -44,23 +43,26 @@ void set_value(int* dst, int x, int y, int value) {
 	dst[(y * WIDTH) + x] = value;
 }
 
-void print_board(int *dst) {
-	printf("board:\n");
-	for (int y = 0; y < HEIGHT; y++) {
-		for (int x = 0; x < WIDTH; x++) {
-			printf("%d ", get_value(dst, x, y)); 
-		}
-		printf("\n");
-	}
-}
-
 int next_empty(int *dst) {
 	for(int i = 0; i < ITEM_COUNT; i++) {
 		if (dst[i] == VALUE_EMPTY) {
+			printf("nextpos %d\n", i);
 			return i;
 		}
 	}
-	return -1;
+	/*
+	for(int x = 0; x < WIDTH; x++) {
+		for(int y = 0; y < HEIGHT; y++) {
+			if (get_value(dst, x, y) == VALUE_EMPTY) {
+				pos_t r = { .x = x, .y = y };
+				printf("nextpos %d %d\n", x, y);
+				return r;
+			}
+		}
+	}
+	pos_t r = { .x = -1, .y = -1 };
+	return r;
+	//*/
 }
 
 int is_valid_row(int *dst, int y) {
@@ -156,21 +158,22 @@ int next_state(void* model, int group, int *src, TransitionCB callback, void *ar
 		same[i] = 1;
 	}
 	// provide transition labels and group number of transition.
-	int action[1] = { group };
+	int action[1];
 	transition_info_t tinfo = { action, group };
 	
-	//printf("\n\n");
-	
-	//print_board(src);
-	
-	int i = next_empty(src);
-	//printf("next_empty %d\n", i);
-	if (i == -1) {
+	int p = next_empty(src);
+	if (p == -1) {
+		return 0;
+	}
+	//printf("next_pos %d %d\n", p.x, p.y);
+	if (p.x == -1 && p.y == -1) {
 		return 0;
 	}
 	
-	dst[i] = group;
-	same[i] = 0;
+	//printf("value: %d\n", group + 1);
+	
+	set_value(dst, p.x, p.y, group + 1);
+	set_value(same, p.x, p.y, 0);
 	
 	if (is_valid(dst)) {
 		callback(arg, &tinfo, dst, same);
@@ -178,40 +181,9 @@ int next_state(void* model, int group, int *src, TransitionCB callback, void *ar
 	}
 	return 0;
 }
-/*
-int initial[ITEM_COUNT] = {
-	5, 3, 4, 6, 7, 8, 0, 1, 2,
-	6, 7, 2, 1, 0, 5, 3, 4, 8,
-	1, 0, 8, 3, 4, 2, 5, 6, 7,
-	
-	8, 5, 0, 7, 6, 1, 4, 2, 3,
-	4, 2, 6, 8, 5, 3, 7, 0, 1,
-	7, 1, 3, 0, 2, 4, 8, 5, 6,
-	
-	0, 6, 1, 5, 3, 7, 2, 8, 4,
-	2, 8, 7, 4, 1, 0, 6, 3, 5,
-	3, 4, 5, 2, 8, 6, 9, 9, 9
-};
-//*/
-//*
-int initial[ITEM_COUNT] = {
-	5, 3, 9, 9, 7, 9, 9, 9, 9,
-	6, 9, 9, 1, 0, 5, 9, 9, 9,
-	9, 0, 8, 9, 9, 9, 9, 6, 9,
-	
-	8, 9, 9, 9, 6, 9, 9, 9, 3,
-	4, 9, 9, 8, 9, 3, 9, 9, 1,
-	7, 9, 9, 9, 2, 9, 9, 9, 6,
-	
-	9, 6, 9, 9, 9, 9, 2, 8, 9,
-	9, 9, 9, 4, 1, 0, 9, 9, 5,
-	9, 9, 9, 9, 8, 9, 9, 7, 0
-};
-//*/
 
+int initial[ITEM_COUNT];
 int* initial_state() {
-	return initial;
-	
 	for(int i = 0; i < ITEM_COUNT; i++) {
 		initial[i] = VALUE_EMPTY;
 	}
@@ -224,7 +196,7 @@ int* initial_state() {
 	
 	set_value(initial, 4, 2, 2);
 	set_value(initial, 7, 2, 7);
-	/*
+	
 	set_value(initial, 1, 3, 2);
 	set_value(initial, 2, 3, 0);
 	set_value(initial, 3, 3, 7);
@@ -245,59 +217,46 @@ int* initial_state() {
 	set_value(initial, 5, 8, 4);
 	set_value(initial, 6, 8, 6);
 	set_value(initial, 7, 8, 0);
-	//*/
+	
+	return initial;
 }
 
-int rm[ITEM_COUNT] = {
-		1,1,1,1,1,1,1,1,1,1,
-		1,1,1,1,1,1,1,1,1,1,
-		1,1,1,1,1,1,1,1,1,1,
-		1,1,1,1,1,1,1,1,1,1,
-		1,1,1,1,1,1,1,1,1,1,
-		1,1,1,1,1,1,1,1,1,1,
-		1,1,1,1,1,1,1,1,1,1,
-		1,1,1,1,1,1,1,1,1,1,
-		1
-	};
+int rm[5][5] = {
+	{1,1,1,1,1},
+	{1,1,1,1,1},
+	{1,1,1,1,1},
+	{1,1,1,1,1},
+	{1,1,1,1,1}
+};
 int* read_matrix(int row) {
-	return rm;
+	return rm[row];
 }
 
-int wm[ITEM_COUNT] = {
-		1,1,1,1,1,1,1,1,1,1,
-		1,1,1,1,1,1,1,1,1,1,
-		1,1,1,1,1,1,1,1,1,1,
-		1,1,1,1,1,1,1,1,1,1,
-		1,1,1,1,1,1,1,1,1,1,
-		1,1,1,1,1,1,1,1,1,1,
-		1,1,1,1,1,1,1,1,1,1,
-		1,1,1,1,1,1,1,1,1,1,
-		1
-	};
+int wm[5][5] = {
+	{1,1,1,1,1},
+	{1,1,1,1,1},
+	{1,1,1,1,1},
+	{1,1,1,1,1},
+	{1,1,1,1,1}
+};
 int* write_matrix(int row) {
-	return wm;
+	return wm[row];
 }
 
-int lm[1][ITEM_COUNT] = {
-	{
-		1,1,1,1,1,1,1,1,1,1,
-		1,1,1,1,1,1,1,1,1,1,
-		1,1,1,1,1,1,1,1,1,1,
-		1,1,1,1,1,1,1,1,1,1,
-		1,1,1,1,1,1,1,1,1,1,
-		1,1,1,1,1,1,1,1,1,1,
-		1,1,1,1,1,1,1,1,1,1,
-		1,1,1,1,1,1,1,1,1,1,
-		1
-	}
+int lm[1][5] = {
+	{1,0,0,0,1}
 };
 int* label_matrix(int row) {
 	return lm[row];
 }
 
 int state_label(void* model, int label, int* src) {
-	int i = next_empty(src);
-	if (i == -1) {
+	
+	pos_t next = next_empty(src);
+	if (next.x == -1 && next.y == -1) {
+		
+		
+			
 		return is_valid(src);
 	}
 	return 0;

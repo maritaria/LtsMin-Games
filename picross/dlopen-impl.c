@@ -6,7 +6,7 @@
 #include <game.h>
 
 // set the name of this PINS plugin
-char pins_plugin_name[] = "sokoban";
+char pins_plugin_name[] = "sudoku";
 
 void pins_model_init(model_t m) {
 
@@ -53,10 +53,8 @@ void pins_model_init(model_t m) {
     GBsetLTStype(m, ltstype);
 
     // setting all values for all non direct types
-    GBchunkPut(m, action_type, chunk_str("move_up"));
-    GBchunkPut(m, action_type, chunk_str("move_down"));
-    GBchunkPut(m, action_type, chunk_str("move_left"));
-    GBchunkPut(m, action_type, chunk_str("move_right"));
+    GBchunkPut(m, action_type, chunk_str("0"));
+    GBchunkPut(m, action_type, chunk_str("1"));
     GBchunkPut(m, bool_type, chunk_str(LTSMIN_VALUE_BOOL_FALSE));
     GBchunkPut(m, bool_type, chunk_str(LTSMIN_VALUE_BOOL_TRUE));
 
@@ -72,29 +70,25 @@ void pins_model_init(model_t m) {
     // create combined matrix
     matrix_t *cm = malloc(sizeof(matrix_t));
     dm_create(cm, group_count(), state_length());
-
+    
     // set the read dependency matrix
     matrix_t *rm = malloc(sizeof(matrix_t));
     dm_create(rm, group_count(), state_length());
     for (int i = 0; i < group_count(); i++) {
         for (int j = 0; j < state_length(); j++) {
-            //if (read_matrix(i)[j]) {
-                dm_set(cm, i, j);
-                dm_set(rm, i, j);
-            //}
+            dm_set(cm, i, j);
+            dm_set(rm, i, j);
         }
     }
     GBsetDMInfoRead(m, rm);
-
+    
     // set the write dependency matrix
     matrix_t *wm = malloc(sizeof(matrix_t));
     dm_create(wm, group_count(), state_length());
     for (int i = 0; i < group_count(); i++) {
         for (int j = 0; j < state_length(); j++) {
-            //if (write_matrix(i)[j]) {
-                dm_set(cm, i, j);
-                dm_set(wm, i, j);
-            //}
+            dm_set(cm, i, j);
+            dm_set(wm, i, j);
         }
     }
     GBsetDMInfoMustWrite(m, wm);
@@ -107,8 +101,7 @@ void pins_model_init(model_t m) {
     dm_create(lm, label_count(), state_length());
     for (int i = 0; i < label_count(); i++) {
         for (int j = 0; j < state_length(); j++) {
-            //if (label_matrix(i)[j])
-            	dm_set(lm, i, j);
+            dm_set(lm, i, j);
         }
     }
     GBsetStateLabelInfo(m, lm);

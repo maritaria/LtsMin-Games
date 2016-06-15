@@ -219,7 +219,7 @@ int* initial_state() {
 	initial.rot = ROT_STAND;
 	
 	//Bloxorz level 1
-	//*
+	
 	set_value(&initial, 0, 0, FLOOR);
 	set_value(&initial, 1, 0, FLOOR);
 	set_value(&initial, 2, 0, FLOOR);
@@ -261,20 +261,6 @@ int* initial_state() {
 	set_value(&initial, 6, 5, FLOOR);
 	set_value(&initial, 7, 5, FLOOR);
 	set_value(&initial, 8, 5, FLOOR);
-	//*/
-	
-	//Large test
-	/*
-	for (int x = 0; x < WIDTH; x++) {
-		for (int y = 0; y < HEIGHT; y++) {
-			set_value(&initial, x, y, FLOOR);
-		}
-	}
-	set_value(&initial, 25, 38, PIT);
-	set_value(&initial, 38, 25, PIT);
-	set_value(&initial, 25, 25, PIT);
-	set_value(&initial, WIDTH - 2, HEIGHT - 2, GOAL);
-	//*/
 	
 	return (int*)&initial;
 }
